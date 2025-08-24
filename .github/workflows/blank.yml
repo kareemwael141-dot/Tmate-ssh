@@ -1,6 +1,7 @@
-name: Tmate Debug
+name: Debug with Tmate
 
 on:
+  # This allows you to run the workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -10,14 +11,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Tmate Debug Session
-        # Use the official tmate action which supports SSH key inputs
-        uses: tmate-io/tmate-action@v2
+      - name: Setup Tmate Session
+        uses: mxschmitt/action-tmate@v3
         with:
-          # This action uses 'ssh-private-key' as the input name
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Limit access to the user who triggered the workflow. This is a crucial security step.
+          limit-access-to-actor: true
 
-      - name: Display Tmate Session Info
+      - name: Display Tmate Connection Info
         if: always()
         run: |
           echo "To connect to the tmate session, use the following command:"
