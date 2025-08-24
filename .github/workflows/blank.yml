@@ -1,7 +1,6 @@
-name: Debug with Tmate
+name: Debug with Tmate (Sleep)
 
 on:
-  # This allows you to run the workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -11,15 +10,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Tmate Session
+      - name: Start Tmate Session
         uses: mxschmitt/action-tmate@v3
         with:
-          # Limit access to the user who triggered the workflow. This is a crucial security step.
           limit-access-to-actor: true
-          detached: true
 
-      - name: Display Tmate Connection Info
-        if: always()
+      - name: Wait for debug session (30 minutes)
         run: |
-          echo "To connect to the tmate session, use the following command:"
-          echo "${{ steps.tmate.outputs.ssh-connection-string }}"
+          echo "Tmate session is active. Waiting for 30 minutes..."
+          # Waits for 1800 seconds (30 minutes)
+           sleep 10000
+        if: always() # Run this step even if the previous one fails to ensure logs are visible
