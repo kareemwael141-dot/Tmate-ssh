@@ -16,6 +16,7 @@ jobs:
         with:
           # Limit access to the user who triggered the workflow. This is a crucial security step.
           limit-access-to-actor: true
+          detached: true
 
       - name: Display Tmate Connection Info
         if: always()
