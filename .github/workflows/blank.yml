@@ -11,17 +11,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Tmate Debug Session
-        uses: mxschmitt/action-tmate@v3
+        # Use the official tmate action which supports SSH key inputs
+        uses: tmate-io/tmate-action@v2
         with:
-          # This is where we provide our SSH private key to the action
-          # It uses the secret we created in step 2.
-          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # You can optionally specify a public key as well, but the action
-          # can often infer this if you've added your public key to your GitHub account.
-          # public-key: ${{ secrets.SSH_PUBLIC_KEY }}
+          # This action uses 'ssh-private-key' as the input name
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Display Tmate Session Info
         if: always()
         run: |
           echo "To connect to the tmate session, use the following command:"
-          echo "ssh ${{ env.TMATE_SSH }}"
+          echo "${{ steps.tmate.outputs.ssh-connection-string }}"
