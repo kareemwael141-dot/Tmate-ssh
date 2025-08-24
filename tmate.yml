@@ -1,0 +1,27 @@
+name: Tmate Debug
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Tmate Debug Session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          # This is where we provide our SSH private key to the action
+          # It uses the secret we created in step 2.
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # You can optionally specify a public key as well, but the action
+          # can often infer this if you've added your public key to your GitHub account.
+          # public-key: ${{ secrets.SSH_PUBLIC_KEY }}
+
+      - name: Display Tmate Session Info
+        if: always()
+        run: |
+          echo "To connect to the tmate session, use the following command:"
+          echo "ssh ${{ env.TMATE_SSH }}"
