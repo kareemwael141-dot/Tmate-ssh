@@ -1,23 +1,31 @@
-name: Debug with Tmate (Sleep)
+name: Debug with Upterm
 
 on:
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  build:
+  debug_job:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start Tmate Session
-        uses: mxschmitt/action-tmate@v3
+      - name: Setup Upterm session
+        uses: lhotari/action-upterm@v1
         with:
+          # This is a crucial security step. It limits access to the user who
+          # triggered the workflow run, using their GitHub-registered SSH public key.
           limit-access-to-actor: true
 
-      - name: Wait for debug session (30 minutes)
+      - name: Your next workflow step
+        # Add a "sleep" command to keep the job alive while you debug.
+        # Upterm does not have a "detached" mode like tmate, so you must
+        # keep the workflow running.
         run: |
-          echo "Tmate session is active. Waiting for 30 minutes..."
-          # Waits for 1800 seconds (30 minutes)
-           sleep 10000
-        if: always() # Run this step even if the previous one fails to ensure logs are visible
+          echo "Upterm session is active. Waiting for 30 minutes..."
+          sleep 1800
+        
+      - name: Continue workflow
+        run: |
+          echo "The workflow continues here after the sleep period."
