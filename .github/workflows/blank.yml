@@ -1,4 +1,4 @@
-name: Debug with Tmate and VNC
+name: Debug with TigerVNC and Tmate
 
 on:
   workflow_dispatch:
@@ -10,23 +10,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install VNC and Desktop Environment
+      - name: Install TigerVNC and Desktop Environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y tightvncserver xfce4 xfce4-goodies
-
+          sudo apt-get install -y tigervnc-standalone-server xfce4 xfce4-goodies
+          
       - name: Start VNC Server
         run: |
+          # Set a VNC password
           VNC_PASSWORD="github-actions-vnc"
           mkdir -p ~/.vnc
           echo "$VNC_PASSWORD" | vncpasswd -f > ~/.vnc/passwd
           chmod 600 ~/.vnc/passwd
           
-          tightvncserver :1 -geometry 1280x720 -depth 24 &
+          # Start the TigerVNC server on a predictable port (5901)
+          vncserver :1 -geometry 1280x720 -depth 24 &
           
       - name: Start Tmate Session
         uses: mxschmitt/action-tmate@v3
         with:
           limit-access-to-actor: true
-      
+
+      - name: Wait for debug session (30 minutes)
+        run: |
+          echo "Tmate session is active. Waiting for 30 minutes..."
+          echo "To connect to VNC, use a VNC viewer to connect to localhost:5901 inside the tmate shell."
+          echo "VNC password is: github-actions-vnc"
+          sleep 1800
         if: always()
