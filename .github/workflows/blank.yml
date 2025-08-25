@@ -1,4 +1,4 @@
-name: Automated Tmate and VNC Debugging
+name: Debug with Tmate and VNC
 
 on:
   workflow_dispatch:
@@ -10,40 +10,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Automated VNC and Tmate Setup
-        id: setup_and_debug
+      - name: Install VNC and Desktop Environment
         run: |
-          # --- 1. Install necessary packages for VNC and a desktop environment ---
-          echo "Installing VNC and desktop environment..."
           sudo apt-get update
           sudo apt-get install -y tightvncserver xfce4 xfce4-goodies
-          
-          # --- 2. Configure and start the VNC server ---
-          echo "Setting up VNC server..."
-          # Set a temporary VNC password
+
+      - name: Start VNC Server
+        run: |
           VNC_PASSWORD="github-actions-vnc"
           mkdir -p ~/.vnc
           echo "$VNC_PASSWORD" | vncpasswd -f > ~/.vnc/passwd
           chmod 600 ~/.vnc/passwd
           
-          # Start the VNC server on display :1
           tightvncserver :1 -geometry 1280x720 -depth 24 &
-
-          # Wait for the VNC server to start
-          sleep 5
           
-          # --- 3. Start the Tmate session ---
-          echo "Starting Tmate session..."
-          /usr/local/bin/tmate -F -a ${{ secrets.SSH_PRIVATE_KEY }} -v -f > tmate-session.log 2>&1 &
-          
-          # Wait for tmate to create the session and print the connection string
-          sleep 10
-          TMATE_SSH=$(grep "SSH:" tmate-session.log | awk '{print $NF}')
-          
-          echo "Tmate session is active. Waiting for 30 minutes..."
-          echo "To connect, use the following command:"
-          echo "$TMATE_SSH"
-          
-          echo "To connect to VNC, use a VNC viewer to connect to localhost:5901 inside the tmate shell."
-          echo "VNC password is: $VNC_PASSWORD"
-          sleep 1800 # Waits for 1800 seconds (30 minutes)
+      - name: Start Tmate Session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
+      
+        if: always()
