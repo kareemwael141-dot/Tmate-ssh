@@ -16,7 +16,7 @@ jobs:
           # --- 1. Install necessary packages for VNC and a desktop environment ---
           echo "Installing VNC and desktop environment..."
           sudo apt-get update
-          sudo apt-get install -y x11vnc xfce4 xfce4-goodies
+          sudo apt-get install -y tightvncserver xfce4 xfce4-goodies
           
           # --- 2. Configure and start the VNC server ---
           echo "Setting up VNC server..."
@@ -26,13 +26,12 @@ jobs:
           echo "$VNC_PASSWORD" | vncpasswd -f > ~/.vnc/passwd
           chmod 600 ~/.vnc/passwd
           
-          # Start a virtual display and a lightweight desktop environment in the background
-          # This command ensures Xfce is started on display :0
-          nohup xfce4-session &
-          
-          # Start the VNC server on display :0
-          nohup x11vnc -display :0 -forever -passwd "$VNC_PASSWORD" -loop -bg -o ~/.vnc/x11vnc.log &
+          # Start the VNC server on display :1
+          tightvncserver :1 -geometry 1280x720 -depth 24 &
 
+          # Wait for the VNC server to start
+          sleep 5
+          
           # --- 3. Start the Tmate session ---
           echo "Starting Tmate session..."
           /usr/local/bin/tmate -F -a ${{ secrets.SSH_PRIVATE_KEY }} -v -f > tmate-session.log 2>&1 &
@@ -43,9 +42,8 @@ jobs:
           
           echo "Tmate session is active. Waiting for 30 minutes..."
           echo "To connect, use the following command:"
-          echo "::set-output name=ssh_command::$TMATE_SSH"
           echo "$TMATE_SSH"
           
-          echo "To find the VNC port inside the tmate session, run: grep 'PORT=' ~/.vnc/x11vnc.log"
+          echo "To connect to VNC, use a VNC viewer to connect to localhost:5901 inside the tmate shell."
           echo "VNC password is: $VNC_PASSWORD"
-          sleep 200000 # Waits for 2000000 seconds (30 minutes)
+          sleep 1800 # Waits for 1800 seconds (30 minutes)
