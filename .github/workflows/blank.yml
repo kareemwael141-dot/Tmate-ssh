@@ -1,4 +1,4 @@
-name: Debug with Tmate (Sleep)
+name: Automated Tmate and VNC Debugging
 
 on:
   workflow_dispatch:
@@ -10,13 +10,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Start Tmate Session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          limit-access-to-actor: true
-
-      - name: Wait for debug session (30 minutes)
+      - name: Automated VNC and Tmate Setup
+        id: setup_and_debug
         run: |
+          # --- 1. Install necessary packages for VNC and a desktop environment ---
+          echo "Installing VNC and desktop environment..."
+          sudo apt-get update
+          sudo apt-get install -y x11vnc xfce4 xfce4-goodies
+          
+          # --- 2. Configure and start the VNC server ---
+          echo "Setting up VNC server..."
+          # Set a temporary VNC password
+          VNC_PASSWORD="github-actions-vnc"
+          mkdir -p ~/.vnc
+          echo "$VNC_PASSWORD" | vncpasswd -f > ~/.vnc/passwd
+          chmod 600 ~/.vnc/passwd
+          
+          # Start a virtual display and a lightweight desktop environment in the background
+          # This command ensures Xfce is started on display :0
+          nohup xfce4-session &
+          
+          # Start the VNC server on display :0
+          nohup x11vnc -display :0 -forever -passwd "$VNC_PASSWORD" -loop -bg -o ~/.vnc/x11vnc.log &
+
+          # --- 3. Start the Tmate session ---
+          echo "Starting Tmate session..."
+          /usr/local/bin/tmate -F -a ${{ secrets.SSH_PRIVATE_KEY }} -v -f > tmate-session.log 2>&1 &
+          
+          # Wait for tmate to create the session and print the connection string
+          sleep 10
+          TMATE_SSH=$(grep "SSH:" tmate-session.log | awk '{print $NF}')
+          
           echo "Tmate session is active. Waiting for 30 minutes..."
-          sleep 1800 # Waits for 1800 seconds (30 minutes)
-        if: always() # Run this step even if the previous one fails to ensure logs are visible
+          echo "To connect, use the following command:"
+          echo "::set-output name=ssh_command::$TMATE_SSH"
+          echo "$TMATE_SSH"
+          
+          echo "To find the VNC port inside the tmate session, run: grep 'PORT=' ~/.vnc/x11vnc.log"
+          echo "VNC password is: $VNC_PASSWORD"
+          sleep 200000 # Waits for 2000000 seconds (30 minutes)
